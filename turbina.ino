@@ -24,6 +24,7 @@ void setup() {
   pinMode(OUTPUT_WATER_UNDER, OUTPUT);
 
   pinMode(INPUT_SECURITY, INPUT);
+  pinMode(OUTPU_ERROR, OUTPUT);
 }
 
 void loop() {
@@ -33,7 +34,7 @@ void loop() {
    int level = analogRead(INPUT_WATER_LEVEL);
   if (currentLevel != level) {
     currentLevel = level;
-    //Serial.println(currentLevel);
+    Serial.println(currentLevel);
     updateIndicatorsLeds(currentLevel);    
   }
 }
@@ -61,6 +62,10 @@ bool hasError() {
   if (digitalRead(INPUT_SECURITY) == HIGH) {
     turnOffLeds();
     currentLevel = -1;
+    digitalWrite(OUTPU_ERROR, HIGH);
+    delay(500);
+    digitalWrite(OUTPU_ERROR, LOW);
+    delay(500);
     Serial.println("Error");
     return true;
   }
