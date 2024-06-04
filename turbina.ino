@@ -1,4 +1,5 @@
 int INPUT_WATER_LEVEL = 3;
+int INPUT_RESET = 7;
 
 ///Security
 int INPUT_SECURITY = 10;
@@ -13,7 +14,10 @@ int WATER_HIGH_LEVEL = 1023;
 int WATER_MEDIUM = 818;
 int WATER_UNDER = 306;
 
+int OUTPUT_TURBINE = 8;
+
 int currentLevel = -1;
+bool inErrorState = false;
 
 void setup() {
   Serial.begin(9600);
@@ -25,15 +29,19 @@ void setup() {
 
   pinMode(INPUT_SECURITY, INPUT);
   pinMode(OUTPU_ERROR, OUTPUT);
+  pinMode(OUTPUT_TURBINE, OUTPUT);
+  pinMode(INPUT_RESET, INPUT);
 }
 
 void loop() {
+  reset();
   if (hasError()) {
     return;
   }
-   int level = analogRead(INPUT_WATER_LEVEL);
+  int level = analogRead(INPUT_WATER_LEVEL);
   if (currentLevel != level) {
     currentLevel = level;
+    controlTurbine(currentLevel);
     Serial.println(currentLevel);
     updateIndicatorsLeds(currentLevel);    
   }
@@ -52,23 +60,44 @@ void updateIndicatorsLeds(int currentLevel) {
   }
 }
 
+void controlTurbine(int level) {
+  if (level <= WATER_UNDER) {
+    digitalWrite(OUTPUT_TURBINE, HIGH);
+  }
+  if (level >= WATER_HIGH_LEVEL) {
+    digitalWrite(OUTPUT_TURBINE, LOW);
+  }
+}
+
 void turnOffLeds() {
   digitalWrite(OUTPUT_WATER_HIGH, LOW);
   digitalWrite(OUTPUT_WATER_MEDIUN, LOW);
   digitalWrite(OUTPUT_WATER_UNDER, LOW);
 }
 
+void reset() {
+  if (digitalRead(INPUT_RESET) == HIGH) {
+    currentLevel = -1;
+    inErrorState = false;
+    Serial.println("Reset");
+  }
+}
+
+void ledFlashing(int pin, int interval) {
+  digitalWrite(pin, HIGH);
+  delay(interval);
+  digitalWrite(pin, LOW);
+  delay(interval);
+}
+
 bool hasError() {
   if (digitalRead(INPUT_SECURITY) == HIGH) {
-    turnOffLeds();
-    currentLevel = -1;
-    digitalWrite(OUTPU_ERROR, HIGH);
-    delay(500);
-    digitalWrite(OUTPU_ERROR, LOW);
-    delay(500);
-    Serial.println("Error");
-    return true;
+    inErrorState = true;
   }
-  Serial.println("No Error");
-  return false;
+  if (inErrorState) {
+    turnOffLeds();    
+    ledFlashing(OUTPU_ERROR, 500);
+  }
+  Serial.println(inErrorState ? "Error" : "No Error");
+  return inErrorState;
 }
