@@ -1,5 +1,6 @@
 int INPUT_WATER_LEVEL = 3;
 int INPUT_RESET = 7;
+int INPUT_STOP_START = 6;
 
 ///Security
 int INPUT_SECURITY = 10;
@@ -18,6 +19,7 @@ int OUTPUT_TURBINE = 8;
 
 int currentLevel = -1;
 bool inErrorState = false;
+bool turbineRunning = false;
 
 void setup() {
   Serial.begin(9600);
@@ -38,6 +40,7 @@ void loop() {
   if (hasError()) {
     return;
   }
+  startStopTurbine();
   int level = analogRead(INPUT_WATER_LEVEL);
   if (currentLevel != level) {
     currentLevel = level;
@@ -60,16 +63,34 @@ void updateIndicatorsLeds(int currentLevel) {
   }
 }
 
+void startTurbine() {
+  turbineRunning = true;
+  digitalWrite(OUTPUT_TURBINE, HIGH);
+}
+
 void stopTurbine() {
+  turbineRunning = false;
   digitalWrite(OUTPUT_TURBINE, LOW);
+}
+
+void startStopTurbine() {
+  if (digitalRead(INPUT_STOP_START) == LOW) {
+    return;
+  }
+  delay(500);
+  if (turbineRunning) {
+    stopTurbine();
+  } else {
+    startTurbine();
+  }
 }
 
 void controlTurbine(int level) {
   if (level <= WATER_UNDER) {
-    digitalWrite(OUTPUT_TURBINE, HIGH);
+    startTurbine();
   }
   if (level >= WATER_HIGH_LEVEL) {
-    digitalWrite(OUTPUT_TURBINE, LOW);
+    stopTurbine();
   }
 }
 
