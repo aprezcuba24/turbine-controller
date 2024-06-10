@@ -24,6 +24,7 @@ unsigned long startTurbineTime = 0;
 
 void setup() {
   Serial.begin(9600);
+  analogReference(INTERNAL);  // 1.1 volt
 
   //Indicators leds
   pinMode(OUTPUT_WATER_HIGH, OUTPUT);
