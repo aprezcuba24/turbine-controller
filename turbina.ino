@@ -14,12 +14,13 @@ int OUTPUT_WATER_UNDER = 11;
 int WATER_HIGH_LEVEL = 1023;
 int WATER_MEDIUM = 818;
 int WATER_UNDER = 306;
+int TIME_TURBINE_LIMIT = 2000;
 
 int OUTPUT_TURBINE = 8;
 
 int currentLevel = -1;
 bool inErrorState = false;
-bool turbineRunning = false;
+unsigned long startTurbineTime = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -41,6 +42,7 @@ void loop() {
     return;
   }
   startStopTurbine();
+  checkTimeTurbine();
   int level = analogRead(INPUT_WATER_LEVEL);
   if (currentLevel != level) {
     currentLevel = level;
@@ -64,13 +66,24 @@ void updateIndicatorsLeds(int currentLevel) {
 }
 
 void startTurbine() {
-  turbineRunning = true;
+  startTurbineTime = millis();
   digitalWrite(OUTPUT_TURBINE, HIGH);
 }
 
 void stopTurbine() {
-  turbineRunning = false;
+  startTurbineTime = 0;
   digitalWrite(OUTPUT_TURBINE, LOW);
+}
+
+void checkTimeTurbine() {
+  if (startTurbineTime == 0) {
+    return;
+  }
+  unsigned long time = millis() - startTurbineTime;
+  Serial.println(time);
+  if (time > TIME_TURBINE_LIMIT) {
+    stopTurbine();
+  }
 }
 
 void startStopTurbine() {
@@ -78,7 +91,7 @@ void startStopTurbine() {
     return;
   }
   delay(500);
-  if (turbineRunning) {
+  if (startTurbineTime != 0) {
     stopTurbine();
   } else {
     startTurbine();
