@@ -60,6 +60,10 @@ void updateIndicatorsLeds(int currentLevel) {
   }
 }
 
+void stopTurbine() {
+  digitalWrite(OUTPUT_TURBINE, LOW);
+}
+
 void controlTurbine(int level) {
   if (level <= WATER_UNDER) {
     digitalWrite(OUTPUT_TURBINE, HIGH);
@@ -95,7 +99,8 @@ bool hasError() {
     inErrorState = true;
   }
   if (inErrorState) {
-    turnOffLeds();    
+    turnOffLeds();
+    stopTurbine();
     ledFlashing(OUTPU_ERROR, 500);
   }
   Serial.println(inErrorState ? "Error" : "No Error");
